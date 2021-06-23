@@ -44,7 +44,7 @@ spec:
               readOnly: false
               
       initContainers:
-        - name: santander-dockercoins-hasher-initcontainer
+        - name: santander-nginx-initcontainer
           args:
             - -c
             - cd /src/; git clone https://github.com/belcebus/nginx.git; cd nginx; git checkout openshift; cp run/configs/nginx/etc/nginx/nginx.conf /etc/nginx/nginx.conf; cp run/secrets/nginx/etc/nginx/conf.d/default.conf /etc/nginx/default.conf; rm -rf nginx
@@ -53,7 +53,7 @@ spec:
           image: index.docker.io/alpine/git:latest
           volumeMounts:
             - mountPath: /src
-              name: santander-dockercoins-hasher-volume
+              name: santander-nginx-init-volume
               readOnly: false
               
           workingDir: /
@@ -66,4 +66,6 @@ spec:
         - name: santander-nginx-cache-volume
           emptyDir: {}
         - name: santander-nginx-run-volume
+          emptyDir: {}
+        - name: santander-nginx-init-volume
           emptyDir: {}
