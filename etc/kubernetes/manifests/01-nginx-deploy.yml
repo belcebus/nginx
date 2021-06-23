@@ -1,0 +1,69 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: santander-nginx
+spec:
+  selector:
+    matchLabels:
+      app: santander-nginx
+  replicas: 3
+  template:
+    metadata:
+      labels:
+        app: santander-nginx
+    spec:
+      containers:
+        - name: santander-nginx-container
+          args:
+            - nginx 
+            - -g 
+            - daemon
+          command:
+            - docker-entrypoint.sh 
+          image: nginx:1.21.0-alpine@sha256:2e76f4d4e21bae1d012267cff67e032bb006a2cff5c00afa5d4ad011c1855128
+          volumeMounts:
+          
+              #solamente tenemos que sobrescribir el fichero y no el contenido de todo el directorio.
+            - mountPath: /etc/nginx/nginx.conf
+              name: santander-nginx-conf-volume
+              #obligatorio para solo montar el fichero y no crear una carpeta de nombre nginx.conf
+              subPath: nginx.conf
+              readOnly: true
+            
+            - mountPath: /etc/nginx/default.conf
+              name: santander-default-conf-volume
+              subPath: default.conf
+              readOnly: true
+            
+            - mountPath: /var/cache/nginx
+              name: santander-nginx-cache-volume
+              readOnly: false
+              
+            - mountPath: /var/run
+              name: santander-nginx-run-volume
+              readOnly: false
+              
+      initContainers:
+        - name: santander-dockercoins-hasher-initcontainer
+          args:
+            - -c
+            - cd /src/; git clone https://github.com/belcebus/nginx.git; cd nginx; git checkout openshift; cp run/configs/nginx/etc/nginx/nginx.conf /etc/nginx/nginx.conf; cp run/secrets/nginx/etc/nginx/conf.d/default.conf /etc/nginx/default.conf; rm -rf nginx
+          command:
+            - sh 
+          image: index.docker.io/alpine/git:latest
+          volumeMounts:
+            - mountPath: /src
+              name: santander-dockercoins-hasher-volume
+              readOnly: false
+              
+          workingDir: /
+      volumes:
+          #ningún volume tine necesidad de conservar lo que guarde o escriba
+        - name: santander-nginx-conf-volume
+          emptyDir: {}
+        - name: santander-default-conf-volume
+          emptyDir: {}
+        - name: santander-nginx-cache-volume
+          emptyDir: {}
+        - name: santander-nginx-run-volume
+          emptyDir: {}
